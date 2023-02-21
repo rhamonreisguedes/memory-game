@@ -24,7 +24,9 @@ const App = () => {
 
         <Button label="Reiniciar" icon={RestartIcon} onClick={resetAndCreateGrid}/>
       </C.Info>
-      <C.GridArea></C.GridArea>
+      <C.GridArea>
+        
+      </C.GridArea>
     </C.Container>
   );
 };
