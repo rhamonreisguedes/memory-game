@@ -22,12 +22,52 @@ const App = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if(playing){
+      if (playing) {
         setTimeElapsed(timeElapsed + 1);
       }
     }, 1000);
     return () => clearInterval(timer);
   }, [playing, timeElapsed]);
+
+  //verify if opened are equal
+  useEffect(() => {
+    if (shownCount === 2) {
+      let opened = gridItems.filter((item) => item.shown === true);
+      if (opened.length === 2) {
+        // v1 - if both are equal, make every "shown" permanent
+        if (opened[0].item === opened[1].item) {
+          let tmpGrid = [...gridItems];
+          for (let i in tmpGrid) {
+            if (tmpGrid[i].shown) {
+              tmpGrid[i].permanentShown = true;
+              tmpGrid[i].shown = false;
+            }
+          }
+          setGridItems(tmpGrid);
+          setShowCount(0);
+        } else {
+          // v2 - if they are NOT equal, close all "shown"
+          setTimeout(() => {
+            let tmpGrid = [...gridItems];
+            for (let i in tmpGrid) {
+              tmpGrid[i].shown = false;
+            }
+            setGridItems(tmpGrid);
+            setShowCount(0);
+          }, 1000);
+
+          setMoveCount((moveCount) => moveCount + 1);
+        }
+      }
+    }
+  }, [shownCount, gridItems]);
+
+  //verify if the game is over
+  useEffect(() => {
+    if(moveCount > 0 && gridItems.every(item => item.permanentShown === true)){
+      setPlaying(false);
+    }
+  }, [moveCount, gridItems])
 
   const resetAndCreateGrid = () => {
     // step 1 - reset the game
@@ -63,7 +103,20 @@ const App = () => {
     setPlaying(true);
   };
 
-  const handleItemClick = (index: number) => {};
+  const handleItemClick = (index: number) => {
+    if (playing && index !== null && shownCount < 2) {
+      let tmpGrid = [...gridItems];
+
+      if (
+        tmpGrid[index].permanentShown === false &&
+        tmpGrid[index].shown === false
+      ) {
+        tmpGrid[index].shown = true;
+        setShowCount(shownCount + 1);
+      }
+      setGridItems(tmpGrid);
+    }
+  };
 
   return (
     <C.Container>
@@ -71,26 +124,24 @@ const App = () => {
         <C.LogoLink href="">
           <img src={logoImage} width="200" alt="" />
         </C.LogoLink>
-        {gridItems.map((item, index) => (
-          <GridItem
-            key={index}
-            item={item}
-            onClick={() => handleItemClick(index)}
-          ></GridItem>
-        ))}
+
         <C.InfoArea>
           <InfoItem label="Tempo" value={formatTimeElpased(timeElapsed)} />
-          <InfoItem label="Movimentos" value="0" />
+          <InfoItem label="Movimentos" value={moveCount.toString()} />
         </C.InfoArea>
 
-        <Button
-          label="Reiniciar"
-          icon={RestartIcon}
-          onClick={resetAndCreateGrid}
-        />
+        <Button label="Reiniciar" icon={RestartIcon} onClick={resetAndCreateGrid} />
       </C.Info>
       <C.GridArea>
-        <C.Grid></C.Grid>
+        <C.Grid>
+          {gridItems.map((item, index) => (
+            <GridItem
+              key={index}
+              item={item}
+              onClick={() => handleItemClick(index)}
+            />
+          ))}
+        </C.Grid>
       </C.GridArea>
     </C.Container>
   );
